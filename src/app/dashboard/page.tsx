@@ -33,16 +33,34 @@ export default function DashboardPage() {
 
   const handleCreateTree = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('handleCreateTree called with name:', newTreeName)
     if (!newTreeName.trim()) return
 
     setCreating(true)
-    const { user } = await getCurrentUser()
+    const { user, error: userError } = await getCurrentUser()
+    console.log('Current user:', user, 'User error:', userError)
+    
+    if (userError) {
+      console.error('Error getting current user:', userError)
+      alert('Authentication error. Please try signing in again.')
+      setCreating(false)
+      return
+    }
+    
     if (user) {
       const { data, error } = await createTree(newTreeName.trim(), user.id)
+      console.log('createTree result:', { data, error })
       if (!error && data) {
         setTrees([data, ...trees])
         setNewTreeName('')
+        console.log('Tree created successfully:', data)
+      } else {
+        console.error('Error creating tree:', error)
+        alert(`Error creating tree: ${error?.message || 'Unknown error'}`)
       }
+    } else {
+      console.error('No user found')
+      alert('Please sign in to create a tree.')
     }
     setCreating(false)
   }

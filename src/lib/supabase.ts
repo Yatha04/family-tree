@@ -74,6 +74,17 @@ export const getTreeWithMembers = async (treeId: string) => {
 }
 
 export const createTree = async (name: string, adminUserId: string) => {
+  console.log('createTree called with:', { name, adminUserId })
+  
+  // Check if user is authenticated
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  console.log('Auth check:', { user, authError })
+  
+  if (!user) {
+    console.error('No authenticated user found')
+    return { data: null, error: { message: 'No authenticated user found' } }
+  }
+  
   const { data, error } = await supabase
     .from('Trees')
     .insert({
@@ -83,6 +94,7 @@ export const createTree = async (name: string, adminUserId: string) => {
     .select()
     .single()
   
+  console.log('Supabase insert result:', { data, error })
   return { data, error }
 }
 
@@ -91,6 +103,7 @@ export const createMember = async (memberData: {
   name: string
   birthdate?: string
   summary?: string
+  photo_path?: string | null
 }) => {
   const { data, error } = await supabase
     .from('Members')
@@ -99,6 +112,31 @@ export const createMember = async (memberData: {
     .single()
   
   return { data, error }
+}
+
+export const updateMember = async (memberId: string, updates: {
+  name?: string
+  birthdate?: string
+  summary?: string
+  photo_path?: string | null
+}) => {
+  const { data, error } = await supabase
+    .from('Members')
+    .update(updates)
+    .eq('id', memberId)
+    .select()
+    .single()
+  
+  return { data, error }
+}
+
+export const deleteMember = async (memberId: string) => {
+  const { error } = await supabase
+    .from('Members')
+    .delete()
+    .eq('id', memberId)
+  
+  return { error }
 }
 
 export const createRelationship = async (relationshipData: {
@@ -114,6 +152,15 @@ export const createRelationship = async (relationshipData: {
     .single()
   
   return { data, error }
+}
+
+export const deleteRelationship = async (relationshipId: string) => {
+  const { error } = await supabase
+    .from('Relationships')
+    .delete()
+    .eq('id', relationshipId)
+  
+  return { error }
 }
 
 // Storage helper functions
