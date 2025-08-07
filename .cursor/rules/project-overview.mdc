@@ -1,0 +1,50 @@
+# Family Tree Application Overview
+
+## Project Vision
+A private, collaborative Family-Tree web application that hobbyists and large families can use at no cost. Users sign in with Google, build an infinite, pan/zoomable tree diagram, auto-derive every blood- and marriage-based relation, invite relatives via magic-link, and upload photos and bios—all powered by free, open-source tools and free tiers.
+
+## Success Metrics
+- **Day-1 Win**: Map three generations in under 5 minutes
+- **Adoption**: ≥ 100 trees created in month 1
+- **Depth**: Average ≥ 8 members per tree
+- **Collaboration**: ≥ 30% of invited relatives accept and engage
+- **Satisfaction**: "Easy" or "Very Easy" rating from ≥ 80% of early testers
+
+## Technical Architecture (Free-First)
+```
+[Browser: React + React Flow/D3.js]
+        ↕  REST API (Next.js)
+[Next.js API Routes on Vercel Free Tier]
+        ↕
+[Supabase Free Tier]
+  • PostgreSQL database
+  • Auth (Google OAuth)
+  • Storage for photos
+```
+
+## Core Technologies
+- **Frontend**: Next.js (React), React Flow/D3.js, Tailwind CSS
+- **Backend**: Next.js API routes on Vercel (free tier)
+- **Database**: Supabase PostgreSQL (free tier)
+- **Auth**: Supabase Auth with Google OAuth
+- **Storage**: Supabase Storage for photos (free tier)
+- **Hosting**: Vercel (free tier)
+
+## Key Features
+1. **Authentication**: Google OAuth via Supabase
+2. **Tree Building**: Infinite pan/zoom canvas with member cards
+3. **Auto-Relationships**: Automatic derivation of blood and marriage relations
+4. **Collaboration**: Magic-link invitations (no email service cost)
+5. **Media**: Photo uploads and member bios
+6. **Search**: Real-time search and navigation
+
+## Development Principles
+- **Free-First**: All tools and services must be free tier or open source
+- **Zero Email Cost**: Use magic links instead of email services
+- **Privacy-Focused**: Private trees with secure access controls
+- **Performance**: Virtualized rendering for large trees
+- **Mobile-Ready**: Responsive design with touch gestures
+description:
+globs:
+alwaysApply: false
+---
