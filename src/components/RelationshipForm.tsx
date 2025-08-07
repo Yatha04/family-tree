@@ -22,7 +22,7 @@ interface RelationshipFormProps {
 export default function RelationshipForm({ treeId, members, onSuccess, onCancel }: RelationshipFormProps) {
   const [memberAId, setMemberAId] = useState('')
   const [memberBId, setMemberBId] = useState('')
-  const [relationshipType, setRelationshipType] = useState<'parent' | 'spouse'>('parent')
+  const [relationshipType, setRelationshipType] = useState<'parent' | 'spouse' | 'sibling'>('parent')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -69,9 +69,12 @@ export default function RelationshipForm({ treeId, members, onSuccess, onCancel 
     
     if (relationshipType === 'parent') {
       return `${memberA.name} is parent of ${memberB.name}`
-    } else {
+    } else if (relationshipType === 'spouse') {
       return `${memberA.name} is spouse of ${memberB.name}`
+    } else if (relationshipType === 'sibling') {
+      return `${memberA.name} is sibling of ${memberB.name}`
     }
+    return ''
   }
 
   return (
@@ -106,12 +109,13 @@ export default function RelationshipForm({ treeId, members, onSuccess, onCancel 
           <select
             id="relationshipType"
             value={relationshipType}
-            onChange={(e) => setRelationshipType(e.target.value as 'parent' | 'spouse')}
+            onChange={(e) => setRelationshipType(e.target.value as 'parent' | 'spouse' | 'sibling')}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
             required
           >
             <option value="parent">Parent</option>
             <option value="spouse">Spouse</option>
+            <option value="sibling">Sibling</option>
           </select>
         </div>
 

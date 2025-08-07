@@ -143,7 +143,7 @@ export const createRelationship = async (relationshipData: {
   tree_id: string
   a_id: string
   b_id: string
-  type: 'parent' | 'spouse'
+  type: 'parent' | 'spouse' | 'sibling'
 }) => {
   const { data, error } = await supabase
     .from('Relationships')

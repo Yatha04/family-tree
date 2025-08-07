@@ -72,6 +72,8 @@
 - [x] **Need for free-flowing tree with lines**: Current visualization was too rigid and didn't look modern
 - [x] **Limited interactivity**: Users couldn't easily add new family members directly from the visualization
 - [x] **Relationships not displaying**: ReactFlow implementation wasn't properly showing parent-child and spouse relationships
+- [x] **Relationship lines not visible**: Fixed edge rendering issues in React Flow component
+- [x] **Sibling relationships not supported**: Database schema and form components didn't support sibling relationships
 
 ### Solutions Implemented
 - [x] **React Flow-based approach**: Implemented interactive graph-based family tree builder
@@ -83,6 +85,15 @@
 - [x] **Context menu**: Right-click or click nodes to add relatives
 - [x] **Hierarchical layout algorithm**: Implemented proper positioning for parent-child relationships
 - [x] **Spouse positioning**: Spouses positioned at same level horizontally
+- [x] **Fixed edge rendering**: Added explicit edge type configuration and proper edge styling
+- [x] **Sibling relationship support**: Updated database schema, types, and form components to support sibling relationships
+
+### Sibling Relationship Fix ✅ COMPLETED
+- [x] **Database Schema Update**: Updated `Relationships` table CHECK constraint to include 'sibling' as valid type
+- [x] **TypeScript Types Update**: Updated Supabase types in `src/types/supabase.ts` to include sibling relationship type
+- [x] **Form Component Update**: Updated `RelationshipForm.tsx` to include sibling option in dropdown
+- [x] **Supabase Client Update**: Updated `createRelationship` function in `src/lib/supabase.ts` to accept sibling type
+- [x] **UI Integration**: FamilyTreeBuilder component already supported sibling relationships in the UI
 
 ### Current Status
 - [x] **New FamilyTreeBuilder component**: Replaced old TreeVisualization with React Flow-based builder
@@ -92,6 +103,13 @@
 - [x] **Integration**: Updated tree page to use new component
 - [x] **Hierarchical layout**: Fixed relationship display with proper parent-child positioning
 - [x] **Relationship lines**: Parent-child and spouse relationships now display with appropriate styling
+- [x] **Edge rendering fix**: Fixed React Flow edge configuration to ensure relationship lines are visible
+- [x] **Handle configuration**: Added proper React Flow handles to custom node component for edge connections
+- [x] **Relationship-specific handles**: Configured different colored handles for different relationship types:
+  - 🟢 **Green (Top)**: Parent connections
+  - 🔵 **Blue (Bottom)**: Child connections  
+  - 🟣 **Purple (Right)**: Spouse connections
+  - 🟠 **Orange (Left)**: Sibling connections
 
 ### Technical Improvements
 - **React Flow Integration**: Leveraged React Flow for professional graph visualization

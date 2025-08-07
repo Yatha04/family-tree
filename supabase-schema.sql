@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS "Relationships" (
   "tree_id" uuid NOT NULL REFERENCES "Trees"("id") ON DELETE CASCADE,
   "a_id" uuid NOT NULL REFERENCES "Members"("id") ON DELETE CASCADE,
   "b_id" uuid NOT NULL REFERENCES "Members"("id") ON DELETE CASCADE,
-  "type" text NOT NULL CHECK ("type" IN ('parent', 'spouse')),
+  "type" text NOT NULL CHECK ("type" IN ('parent', 'spouse', 'sibling')),
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
   UNIQUE("tree_id", "a_id", "b_id", "type")
 );

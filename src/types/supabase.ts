@@ -64,7 +64,7 @@ export interface Database {
           tree_id: string
           a_id: string
           b_id: string
-          type: string
+          type: 'parent' | 'spouse' | 'sibling'
           created_at: string
         }
         Insert: {
@@ -72,7 +72,7 @@ export interface Database {
           tree_id: string
           a_id: string
           b_id: string
-          type: string
+          type: 'parent' | 'spouse' | 'sibling'
           created_at?: string
         }
         Update: {
@@ -80,7 +80,7 @@ export interface Database {
           tree_id?: string
           a_id?: string
           b_id?: string
-          type?: string
+          type?: 'parent' | 'spouse' | 'sibling'
           created_at?: string
         }
       }

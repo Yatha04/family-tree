@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useState, useRef, useEffect } from 'react'
+import React, { useCallback, useState, useRef, useEffect, useMemo } from 'react'
 import ReactFlow, {
   ReactFlowProvider,
   addEdge,
@@ -13,6 +13,8 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
   NodeTypes,
+  Handle,
+  Position,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { v4 as uuid } from 'uuid'
@@ -43,7 +45,7 @@ interface FamilyTreeBuilderProps {
 // Define the node data type for React Flow
 type NodeData = Member & { isPlaceholder?: boolean }
 
-type RelType = 'parent' | 'spouse' | 'child'
+type RelType = 'parent' | 'spouse' | 'child' | 'sibling'
 
 // Hierarchical layout function
 const applyHierarchicalLayout = (nodes: any[], relationships: Relationship[]) => {
@@ -115,7 +117,51 @@ const applyHierarchicalLayout = (nodes: any[], relationships: Relationship[]) =>
 // Custom node component for family members
 const FamilyNode = ({ data }: { data: any }) => {
   return (
-    <div className="bg-white border-2 border-gray-200 rounded-lg p-3 shadow-md min-w-[120px]">
+    <div className="bg-white border-2 border-gray-200 rounded-lg p-3 shadow-md min-w-[120px] relative">
+      {/* Connection handles - specific to relationship types */}
+      <Handle 
+        type="target" 
+        position={Position.Top} 
+        className="w-3 h-3 bg-green-500" 
+        id="parent"
+        style={{ top: '-6px' }}
+      />
+      <Handle 
+        type="source" 
+        position={Position.Bottom} 
+        className="w-3 h-3 bg-blue-500" 
+        id="child"
+        style={{ bottom: '-6px' }}
+      />
+      <Handle 
+        type="source" 
+        position={Position.Right} 
+        className="w-3 h-3 bg-purple-500" 
+        id="spouse-source"
+        style={{ right: '-6px' }}
+      />
+      <Handle 
+        type="target" 
+        position={Position.Left} 
+        className="w-3 h-3 bg-purple-500" 
+        id="spouse-target"
+        style={{ left: '-6px' }}
+      />
+      <Handle 
+        type="source" 
+        position={Position.Left} 
+        className="w-3 h-3 bg-orange-500" 
+        id="sibling-source"
+        style={{ left: '-6px' }}
+      />
+      <Handle 
+        type="target" 
+        position={Position.Right} 
+        className="w-3 h-3 bg-orange-500" 
+        id="sibling-target"
+        style={{ right: '-6px' }}
+      />
+      
       {/* Photo or avatar */}
       <div className="flex justify-center mb-2">
         {data.photo_path ? (
@@ -146,6 +192,7 @@ const FamilyNode = ({ data }: { data: any }) => {
   )
 }
 
+// Define nodeTypes outside the component to prevent recreation
 const nodeTypes: NodeTypes = {
   familyNode: FamilyNode,
 }
@@ -179,6 +226,7 @@ export default function FamilyTreeBuilder({
           isPlaceholder: true
         },
       }] as any[])
+      setEdges([]) // Clear edges when no members
       return
     }
 
@@ -193,38 +241,50 @@ export default function FamilyTreeBuilder({
       data: member,
     }))
 
-    setNodes(memberNodes)
-
     // Convert existing relationships to React Flow edges
-    const relationshipEdges: Edge[] = relationships.map(rel => ({
-      id: rel.id,
-      source: rel.a_id,
-      target: rel.b_id,
-      animated: false,
-      style: {
-        stroke: rel.type === 'spouse' ? '#8B5CF6' : '#3B82F6',
-        strokeDasharray: rel.type === 'spouse' ? '5,5' : undefined,
-        strokeWidth: rel.type === 'spouse' ? 3 : 2,
-      },
-      data: { type: rel.type }
-    }))
+    const relationshipEdges: Edge[] = relationships.map(rel => {
+      // Determine source and target handles based on relationship type
+      let sourceHandle = 'child'
+      let targetHandle = 'parent'
+      
+      if (rel.type === 'spouse') {
+        sourceHandle = 'spouse-source'
+        targetHandle = 'spouse-target'
+      } else if (rel.type === 'sibling') {
+        sourceHandle = 'sibling-source'
+        targetHandle = 'sibling-target'
+      }
+      
+      return {
+        id: rel.id,
+        source: rel.a_id,
+        target: rel.b_id,
+        sourceHandle: sourceHandle,
+        targetHandle: targetHandle,
+        type: 'default', // Explicitly set edge type
+        animated: false,
+        style: {
+          stroke: rel.type === 'spouse' ? '#8B5CF6' : rel.type === 'sibling' ? '#F97316' : '#3B82F6',
+          strokeDasharray: rel.type === 'spouse' ? '5,5' : undefined,
+          strokeWidth: rel.type === 'spouse' ? 6 : 5,
+          opacity: 1,
+          zIndex: 1000,
+        },
+        data: { type: rel.type }
+      }
+    })
 
-    setEdges(relationshipEdges)
-    
     // Apply hierarchical layout for parent-child relationships
     if (relationships.length > 0) {
-      const updatedNodes = [...memberNodes]
-      
-      // Find root nodes (nodes with no parents)
-      const childIds = new Set(relationships.filter(r => r.type === 'parent').map(r => r.b_id))
-      const rootNodes = memberNodes.filter(node => !childIds.has(node.id))
-      
       // Apply hierarchical positioning
-      const positionedNodes = applyHierarchicalLayout(updatedNodes, relationships)
+      const positionedNodes = applyHierarchicalLayout([...memberNodes], relationships)
       setNodes(positionedNodes)
     } else {
       setNodes(memberNodes)
     }
+
+    // Set edges after nodes are positioned
+    setEdges(relationshipEdges)
   }, [members, relationships])
 
   // Handle connecting existing nodes
@@ -236,7 +296,20 @@ export default function FamilyTreeBuilder({
         type: 'parent' // Default type, could be enhanced with a selector
       })
     }
-    setEdges(eds => addEdge({ ...params, id: uuid() }, eds))
+    const newEdge = {
+      ...params,
+      id: uuid(),
+      type: 'default',
+      animated: false,
+      style: {
+        stroke: '#3B82F6',
+        strokeWidth: 5,
+        opacity: 1,
+        zIndex: 1000,
+      },
+      data: { type: 'parent' }
+    }
+    setEdges(eds => addEdge(newEdge, eds))
   }, [onAddRelationship])
 
   // Add a new relative
@@ -249,6 +322,7 @@ export default function FamilyTreeBuilder({
       parent: { x: 0, y: -200 },
       child: { x: 0, y: 200 },
       spouse: { x: 250, y: 0 },
+      sibling: { x: 200, y: 0 },
     }[type]
 
     const newNodeId = uuid()
@@ -269,15 +343,32 @@ export default function FamilyTreeBuilder({
       data: newMember,
     }
 
+    // Determine source and target handles based on relationship type
+    let sourceHandle = 'child'
+    let targetHandle = 'parent'
+    
+    if (type === 'spouse') {
+      sourceHandle = 'spouse-source'
+      targetHandle = 'spouse-target'
+    } else if (type === 'sibling') {
+      sourceHandle = 'sibling-source'
+      targetHandle = 'sibling-target'
+    }
+    
     const newEdge: Edge = {
       id: uuid(),
       source: parentId,
       target: newNodeId,
+      sourceHandle: sourceHandle,
+      targetHandle: targetHandle,
+      type: 'default',
       animated: false,
       style: {
-        stroke: type === 'spouse' ? '#8B5CF6' : '#3B82F6',
+        stroke: type === 'spouse' ? '#8B5CF6' : type === 'sibling' ? '#F97316' : '#3B82F6',
         strokeDasharray: type === 'spouse' ? '5,5' : undefined,
-        strokeWidth: type === 'spouse' ? 3 : 2,
+        strokeWidth: type === 'spouse' ? 6 : 5,
+        opacity: 1,
+        zIndex: 1000,
       },
       data: { type }
     }
@@ -338,6 +429,11 @@ export default function FamilyTreeBuilder({
           zoomOnPinch
           minZoom={0.1}
           maxZoom={2}
+          defaultEdgeOptions={{
+            type: 'default',
+            animated: false,
+            style: { stroke: '#3B82F6', strokeWidth: 5, opacity: 1, zIndex: 1000 }
+          }}
         >
           <MiniMap />
           <Controls />
@@ -358,42 +454,52 @@ export default function FamilyTreeBuilder({
             <div className="text-xs font-medium text-gray-700 mb-2 px-2">
               Add relative to {selectedNode.data.name}
             </div>
-            <div className="space-y-1">
-              <button
-                onClick={() => handleAddRelative('parent')}
-                className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
-              >
-                Add Parent
-              </button>
-              <button
-                onClick={() => handleAddRelative('child')}
-                className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
-              >
-                Add Child
-              </button>
-              <button
-                onClick={() => handleAddRelative('spouse')}
-                className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
-              >
-                Add Spouse
-              </button>
-            </div>
+                         <div className="space-y-1">
+               <button
+                 onClick={() => handleAddRelative('parent')}
+                 className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
+               >
+                 Add Parent
+               </button>
+               <button
+                 onClick={() => handleAddRelative('child')}
+                 className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
+               >
+                 Add Child
+               </button>
+               <button
+                 onClick={() => handleAddRelative('spouse')}
+                 className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
+               >
+                 Add Spouse
+               </button>
+               <button
+                 onClick={() => handleAddRelative('sibling')}
+                 className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded"
+               >
+                 Add Sibling
+               </button>
+             </div>
           </div>
         )}
 
-        {/* Legend */}
-        <div className="absolute bottom-4 left-4 bg-white border rounded-lg p-3 shadow-sm">
-          <div className="text-xs text-gray-600 space-y-1">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-0.5 bg-blue-500"></div>
-              <span>Parent-Child</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-0.5 bg-purple-500 border-t-2 border-dashed border-purple-500"></div>
-              <span>Spouse</span>
-            </div>
-          </div>
-        </div>
+                 {/* Legend */}
+         <div className="absolute bottom-4 left-4 bg-white border rounded-lg p-3 shadow-sm">
+           <div className="text-xs text-gray-600 space-y-1">
+             <div className="flex items-center gap-2">
+               <div className="w-3 h-0.5 bg-blue-500"></div>
+               <span>Parent-Child</span>
+             </div>
+             <div className="flex items-center gap-2">
+               <div className="w-3 h-0.5 bg-purple-500 border-t-2 border-dashed border-purple-500"></div>
+               <span>Spouse</span>
+             </div>
+             <div className="flex items-center gap-2">
+               <div className="w-3 h-0.5 bg-orange-500"></div>
+               <span>Sibling</span>
+             </div>
+           </div>
+         </div>
       </ReactFlowProvider>
     </div>
   )
