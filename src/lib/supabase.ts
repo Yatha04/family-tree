@@ -1,11 +1,22 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/supabase'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+// Debug: Log all environment variables to see what's being loaded
+console.log('Environment variables check:', {
+  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'set' : 'missing',
+  NODE_ENV: process.env.NODE_ENV
+})
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
+  console.error('Missing Supabase environment variables:', {
+    url: supabaseUrl ? 'set' : 'missing',
+    key: supabaseAnonKey ? 'set' : 'missing'
+  })
+  throw new Error('Missing Supabase environment variables. Please check your .env.local file.')
 }
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {

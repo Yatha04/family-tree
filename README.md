@@ -40,19 +40,28 @@ cd family-tree
 npm install
 ```
 
-3. Set up environment variables:
-Create a `.env.local` file in the root directory:
-```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
+3. Set up Supabase:
+   - Create a new Supabase project at https://supabase.com
+   - Go to Settings > API to get your project URL and anon key
+   - Copy `env.example` to `.env.local` and fill in your Supabase credentials
 
-4. Run the development server:
+4. Set up the database:
+   - Go to your Supabase dashboard > SQL Editor
+   - Copy and paste the contents of `supabase-schema.sql`
+   - Run the SQL to create all tables and policies
+
+5. Configure Google OAuth:
+   - Go to Authentication > Providers in your Supabase dashboard
+   - Enable Google provider
+   - Add your Google OAuth credentials (Client ID and Secret)
+   - Set the redirect URL to: `https://your-project.supabase.co/auth/v1/callback`
+
+6. Run the development server:
 ```bash
 npm run dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+6. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Project Structure
 
