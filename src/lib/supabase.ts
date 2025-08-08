@@ -163,6 +163,21 @@ export const deleteRelationship = async (relationshipId: string) => {
   return { error }
 }
 
+export const updateRelationship = async (relationshipId: string, updates: {
+  a_id?: string
+  b_id?: string
+  type?: 'parent' | 'spouse' | 'sibling'
+}) => {
+  const { data, error } = await supabase
+    .from('Relationships')
+    .update(updates)
+    .eq('id', relationshipId)
+    .select()
+    .single()
+  
+  return { data, error }
+}
+
 // Storage helper functions
 export const uploadMemberPhoto = async (file: File, memberId: string) => {
   const fileName = `${memberId}/${Date.now()}-${file.name}`

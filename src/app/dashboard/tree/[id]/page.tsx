@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { getTreeWithMembers, getCurrentUser } from '@/lib/supabase'
+import { getTreeWithMembers, getCurrentUser, deleteRelationship, updateRelationship } from '@/lib/supabase'
 import Link from 'next/link'
 import FamilyTreeBuilder from '@/components/FamilyTreeBuilder'
 import MemberForm from '@/components/MemberForm'
@@ -45,6 +45,8 @@ export default function TreeViewPage() {
   const [activeTab, setActiveTab] = useState<'view' | 'members' | 'relationships' | 'invite'>('view')
   const [showMemberForm, setShowMemberForm] = useState(false)
   const [showRelationshipForm, setShowRelationshipForm] = useState(false)
+  const [editingRelationship, setEditingRelationship] = useState<Relationship | null>(null)
+  const [deletingRelationshipId, setDeletingRelationshipId] = useState<string | null>(null)
 
   useEffect(() => {
     loadTree()
@@ -73,6 +75,26 @@ export default function TreeViewPage() {
   const handleRelationshipAdded = () => {
     loadTree()
     setShowRelationshipForm(false)
+  }
+
+  const handleRelationshipEdited = () => {
+    loadTree()
+    setEditingRelationship(null)
+  }
+
+  const handleDeleteRelationship = async (relationshipId: string) => {
+    try {
+      const { error } = await deleteRelationship(relationshipId)
+      if (error) {
+        setError('Failed to delete relationship')
+        return
+      }
+      loadTree()
+    } catch (err) {
+      setError('Failed to delete relationship')
+    } finally {
+      setDeletingRelationshipId(null)
+    }
   }
 
   if (loading) {
@@ -256,15 +278,42 @@ export default function TreeViewPage() {
                   const memberA = tree.Members.find(m => m.id === relationship.a_id)
                   const memberB = tree.Members.find(m => m.id === relationship.b_id)
                   
+                  const getRelationshipText = () => {
+                    switch (relationship.type) {
+                      case 'parent':
+                        return 'is parent of'
+                      case 'spouse':
+                        return 'is spouse of'
+                      case 'sibling':
+                        return 'is sibling of'
+                      default:
+                        return 'is related to'
+                    }
+                  }
+                  
                   return (
                     <div key={relationship.id} className="border rounded-lg p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <span className="font-medium">{memberA?.name}</span>
                           <span className="text-gray-400">
-                            {relationship.type === 'parent' ? 'is parent of' : 'is spouse of'}
+                            {getRelationshipText()}
                           </span>
                           <span className="font-medium">{memberB?.name}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => setEditingRelationship(relationship)}
+                            className="px-3 py-1 text-sm text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => setDeletingRelationshipId(relationship.id)}
+                            className="px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded"
+                          >
+                            Delete
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -305,6 +354,49 @@ export default function TreeViewPage() {
               onSuccess={handleRelationshipAdded}
               onCancel={() => setShowRelationshipForm(false)}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Edit Relationship Modal */}
+      {editingRelationship && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <RelationshipForm
+              treeId={treeId}
+              members={tree.Members}
+              editingRelationship={editingRelationship}
+              onSuccess={handleRelationshipEdited}
+              onCancel={() => setEditingRelationship(null)}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingRelationshipId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Delete Relationship</h3>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete this relationship? This action cannot be undone.
+              </p>
+              <div className="flex justify-center space-x-3">
+                <button
+                  onClick={() => setDeletingRelationshipId(null)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteRelationship(deletingRelationshipId)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

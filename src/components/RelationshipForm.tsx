@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { createRelationship } from '@/lib/supabase'
+import { useState, useEffect } from 'react'
+import { createRelationship, updateRelationship } from '@/lib/supabase'
 
 interface Member {
   id: string
@@ -12,19 +12,36 @@ interface Member {
   created_at: string
 }
 
+interface Relationship {
+  id: string
+  a_id: string
+  b_id: string
+  type: string
+}
+
 interface RelationshipFormProps {
   treeId: string
   members: Member[]
+  editingRelationship?: Relationship | null
   onSuccess: () => void
   onCancel: () => void
 }
 
-export default function RelationshipForm({ treeId, members, onSuccess, onCancel }: RelationshipFormProps) {
+export default function RelationshipForm({ treeId, members, editingRelationship, onSuccess, onCancel }: RelationshipFormProps) {
   const [memberAId, setMemberAId] = useState('')
   const [memberBId, setMemberBId] = useState('')
   const [relationshipType, setRelationshipType] = useState<'parent' | 'spouse' | 'sibling'>('parent')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Initialize form with editing data if provided
+  useEffect(() => {
+    if (editingRelationship) {
+      setMemberAId(editingRelationship.a_id)
+      setMemberBId(editingRelationship.b_id)
+      setRelationshipType(editingRelationship.type as 'parent' | 'spouse' | 'sibling')
+    }
+  }, [editingRelationship])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,23 +54,38 @@ export default function RelationshipForm({ treeId, members, onSuccess, onCancel 
     setError(null)
 
     try {
-      const relationshipData = {
-        tree_id: treeId,
-        a_id: memberAId,
-        b_id: memberBId,
-        type: relationshipType
-      }
+      if (editingRelationship) {
+        // Update existing relationship
+        const { error } = await updateRelationship(editingRelationship.id, {
+          a_id: memberAId,
+          b_id: memberBId,
+          type: relationshipType
+        })
+        
+        if (error) {
+          setError('Failed to update relationship')
+          return
+        }
+      } else {
+        // Create new relationship
+        const relationshipData = {
+          tree_id: treeId,
+          a_id: memberAId,
+          b_id: memberBId,
+          type: relationshipType
+        }
 
-      const { error } = await createRelationship(relationshipData)
-      
-      if (error) {
-        setError('Failed to create relationship')
-        return
+        const { error } = await createRelationship(relationshipData)
+        
+        if (error) {
+          setError('Failed to create relationship')
+          return
+        }
       }
 
       onSuccess()
     } catch (err) {
-      setError('Failed to create relationship')
+      setError(editingRelationship ? 'Failed to update relationship' : 'Failed to create relationship')
     } finally {
       setLoading(false)
     }
@@ -79,7 +111,9 @@ export default function RelationshipForm({ treeId, members, onSuccess, onCancel 
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Add Family Relationship</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        {editingRelationship ? 'Edit Family Relationship' : 'Add Family Relationship'}
+      </h3>
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -165,7 +199,7 @@ export default function RelationshipForm({ treeId, members, onSuccess, onCancel 
             disabled={loading || !memberAId || !memberBId || memberAId === memberBId}
             className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50"
           >
-            {loading ? 'Adding...' : 'Add Relationship'}
+            {loading ? (editingRelationship ? 'Updating...' : 'Adding...') : (editingRelationship ? 'Update Relationship' : 'Add Relationship')}
           </button>
         </div>
       </form>
