@@ -37,7 +37,7 @@ export default function DashboardLayout({
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading...</p>
+          <p className="mt-2 text-gray-700">Loading...</p>
         </div>
       </div>
     )
@@ -56,12 +56,12 @@ export default function DashboardLayout({
             </div>
             
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-700">
+              <span className="text-sm text-gray-800">
                 {user?.email}
               </span>
               <button
                 onClick={handleSignOut}
-                className="text-sm text-gray-500 hover:text-gray-700"
+                className="text-sm text-gray-700 hover:text-gray-900"
               >
                 Sign out
               </button>

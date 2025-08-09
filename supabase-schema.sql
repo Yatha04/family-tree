@@ -20,12 +20,14 @@ CREATE TABLE IF NOT EXISTS "Members" (
   "birthdate" date,
   "photo_path" text,
   "summary" text,
+  "location" text,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
 -- Optional stored positions for React Flow layout
 ALTER TABLE "Members" ADD COLUMN IF NOT EXISTS "position_x" integer;
 ALTER TABLE "Members" ADD COLUMN IF NOT EXISTS "position_y" integer;
+ALTER TABLE "Members" ADD COLUMN IF NOT EXISTS "location" text;
 
 -- Create Relationships table
 CREATE TABLE IF NOT EXISTS "Relationships" (

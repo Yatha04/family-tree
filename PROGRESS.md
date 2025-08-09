@@ -184,6 +184,39 @@ npm run dev
 - **Flexible Layout**: No hierarchical constraints - grow family tree organically in any direction
 - **Relationship Management**: Full CRUD operations for relationships with edit and delete functionality
 
+## New Feature: Member Location Attribute
+
+- Added optional `location` for family members.
+- Changes:
+  - Updated form UI in `src/components/MemberForm.tsx` to include a Location input and send it with member creation.
+  - Extended Supabase helper `createMember` in `src/lib/supabase.ts` to accept `location`.
+  - Updated shared types:
+    - `src/types/index.ts` `Member` now has `location?: string`.
+    - `src/types/supabase.ts` `Members` Row/Insert/Update include `location` fields.
+  - Database schema: added `location` column to `Members` in `supabase-schema.sql` (included in CREATE TABLE and as an `ALTER TABLE ... IF NOT EXISTS`).
+
+Impact: Users can record a member's city/country when adding them. Backward-compatible; existing data unaffected.
+
+## UI Contrast Tweak: Form Inputs
+
+- Increased default contrast of form inputs globally in `src/app/globals.css`:
+  - Input/textarea text set to gray-900 for readability on white backgrounds
+  - Placeholder text set to gray-600 at full opacity
+- Affects Add Member modal and other forms for consistent legibility.
+
+## UI Contrast Improvements
+
+- Increased text contrast across key pages/components to improve readability while keeping the design simple:
+  - `src/app/page.tsx`: Prominent body text and feature descriptions upgraded from `text-gray-600/500` to `text-gray-800/700`.
+  - `src/app/auth/signin/page.tsx`: Subtitle and navigation link darkened for better visibility.
+  - `src/app/dashboard/layout.tsx`: Loading text, user email, and sign-out link darkened.
+  - `src/components/InviteForm.tsx`: Description and helper text darkened.
+  - `src/components/PhotoUpload.tsx`: Success and helper text darkened.
+  - `src/components/FamilyTreeBuilder.tsx`: Context menu header and legend text darkened.
+  - `src/components/TreeVisualization.tsx`: Empty-state and legend text darkened.
+
+Impact: Improves accessibility and readability without altering layout or flows.
+
 ## New Feature: Persisted Manual Layout (React Flow)
 
 - Added optional `position_x` and `position_y` columns to `Members` so manual node positions can be saved.
@@ -259,3 +292,28 @@ You should see the admin-only CRUD policies, and optionally a read policy that a
 - Cleaned up Supabase client environment logging; guarded diagnostics in dev only.
 - Implemented invite permissions: added `TreePermissions` table/schema, RLS, and updated `acceptInvite` to upsert permission then mark invite accepted.
 - Marked legacy `TreeVisualization.tsx` as deprecated reference (React Flow builder is primary).
+
+## Relationship Taxonomy Proposal (Planning)
+
+We currently store three base relationship types: `parent`, `spouse`, `sibling`.
+
+To support a “proper” family tree experience, users typically expect many additional labels. Most can be derived from the base edges; a few may need attributes or extra base types.
+
+- Derived from existing edges (no schema change required): ~16
+  - Direct line: `child`, `grandparent`, `grandchild`, `great-grandparent`, `great-grandchild` (repeatable to N)
+  - Collateral: `aunt`, `uncle`, `niece`, `nephew`, `cousin` (n-th cousin, m-times removed)
+  - In-law via spouse links: `parent-in-law`, `child-in-law`, `sibling-in-law`, `grandparent-in-law`, `aunt/uncle-in-law`, `niece/nephew-in-law`, `cousin-in-law`
+
+- Relationship qualifiers (attributes on existing edges): ~9
+  - On `parent`: `biological`, `adoptive`, `step`, `foster`, `guardian`
+  - On `sibling`: `full`, `half`, `step`, `twin`
+
+- Additional social/marital statuses (either attributes on `spouse` or separate base types): ~4
+  - `ex-spouse` (or `spouse` with status=`divorced`/`separated`), `fiancé/fiancée` (engaged), `partner/domestic partner`, `co-parent` (non-spousal)
+
+Minimal model recommendation:
+- Keep base edges lean: `parent`, `spouse` (existing), retain `sibling` (for UX convenience), and add `partner` if we need non-marital unions.
+- Add attributes on edges (not new types) to express: biological/adoptive/step/foster/guardian; marital status (married, engaged, divorced, separated); sibling type (full/half/step/twin).
+- Compute all other labels as derived at render time.
+
+Approximate count of “new” user-facing labels supported after derivation: 25–35, without expanding DB types beyond possibly adding `partner` and edge attributes.

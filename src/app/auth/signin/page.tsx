@@ -32,7 +32,7 @@ export default function SignInPage() {
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
             Sign in to Family Tree
           </h2>
-          <p className="text-gray-600">
+          <p className="text-gray-800">
             Create and manage your family tree
           </p>
         </div>
@@ -52,7 +52,7 @@ export default function SignInPage() {
           </button>
           
           <div className="text-center">
-            <a href="/" className="text-sm text-gray-500 hover:text-gray-700">
+            <a href="/" className="text-sm text-gray-700 hover:text-gray-900">
               ← Back to home
             </a>
           </div>

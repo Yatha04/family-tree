@@ -99,7 +99,7 @@ export default function PhotoUpload({ onPhotoUploaded, currentPhotoPath }: Photo
             alt="Member photo"
             className="w-16 h-16 rounded-full object-cover border"
           />
-          <span className="text-sm text-gray-500">Photo uploaded successfully</span>
+          <span className="text-sm text-gray-700">Photo uploaded successfully</span>
         </div>
       )}
 
@@ -107,7 +107,7 @@ export default function PhotoUpload({ onPhotoUploaded, currentPhotoPath }: Photo
         <div className="text-red-600 text-sm">{error}</div>
       )}
 
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-gray-600">
         Supported formats: JPG, PNG, GIF. Max size: 5MB.
       </p>
     </div>

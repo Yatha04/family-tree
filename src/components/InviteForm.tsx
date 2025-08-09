@@ -51,7 +51,7 @@ export default function InviteForm({ treeId }: InviteFormProps) {
     <div className="space-y-6">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">Create Invite Link</h3>
-        <p className="text-gray-600 mb-4">
+        <p className="text-gray-800 mb-4">
           Generate a link to invite family members to view or edit your family tree.
         </p>
       </div>
@@ -104,7 +104,7 @@ export default function InviteForm({ treeId }: InviteFormProps) {
               </div>
             </div>
             
-            <div className="text-xs text-gray-500 space-y-1">
+            <div className="text-xs text-gray-700 space-y-1">
               <p>• Share this link with family members to invite them</p>
               <p>• The link will expire in 7 days</p>
               <p>• Recipients will need to sign in with Google to access the tree</p>

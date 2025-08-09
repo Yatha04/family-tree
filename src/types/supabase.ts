@@ -37,6 +37,7 @@ export interface Database {
           birthdate: string | null
           photo_path: string | null
           summary: string | null
+          location: string | null
            position_x: number | null
            position_y: number | null
           created_at: string
@@ -48,6 +49,7 @@ export interface Database {
           birthdate?: string | null
           photo_path?: string | null
           summary?: string | null
+          location?: string | null
            position_x?: number | null
            position_y?: number | null
           created_at?: string
@@ -59,6 +61,7 @@ export interface Database {
           birthdate?: string | null
           photo_path?: string | null
           summary?: string | null
+          location?: string | null
            position_x?: number | null
            position_y?: number | null
           created_at?: string

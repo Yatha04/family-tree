@@ -465,7 +465,7 @@ export default function FamilyTreeBuilder({
               marginTop: '-10px'
             }}
           >
-            <div className="text-xs font-medium text-gray-700 mb-2 px-2">
+            <div className="text-xs font-medium text-gray-800 mb-2 px-2">
               Add relative to {selectedNode.data.name}
             </div>
                          <div className="space-y-1">
@@ -499,7 +499,7 @@ export default function FamilyTreeBuilder({
 
                  {/* Legend */}
          <div className="absolute bottom-4 left-4 bg-white border rounded-lg p-3 shadow-sm">
-           <div className="text-xs text-gray-600 space-y-1">
+           <div className="text-xs text-gray-700 space-y-1">
              <div className="flex items-center gap-2">
                <div className="w-3 h-0.5 bg-blue-500"></div>
                <span>Parent-Child</span>

@@ -13,6 +13,7 @@ export interface Member {
   birthdate?: string
   photo_path?: string
   summary?: string
+  location?: string
   created_at: string
 }
 

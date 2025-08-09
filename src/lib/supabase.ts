@@ -113,6 +113,7 @@ export const createMember = async (memberData: {
   name: string
   birthdate?: string
   summary?: string
+  location?: string
   photo_path?: string | null
 }) => {
   const { data, error } = await supabase

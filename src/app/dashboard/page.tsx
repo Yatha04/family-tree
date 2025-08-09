@@ -69,7 +69,7 @@ export default function DashboardPage() {
     return (
       <div className="text-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
-        <p className="mt-2 text-gray-600">Loading your trees...</p>
+        <p className="mt-2 text-gray-700">Loading your trees...</p>
       </div>
     )
   }
@@ -90,7 +90,7 @@ export default function DashboardPage() {
             value={newTreeName}
             onChange={(e) => setNewTreeName(e.target.value)}
             placeholder="Enter tree name..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-600 text-gray-900 placeholder-gray-600"
             disabled={creating}
           />
           <button
@@ -117,7 +117,7 @@ export default function DashboardPage() {
               </svg>
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No trees yet</h3>
-            <p className="text-gray-500">Create your first family tree to get started</p>
+            <p className="text-gray-700">Create your first family tree to get started</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-200">
@@ -127,7 +127,7 @@ export default function DashboardPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-lg font-medium text-gray-900">{tree.name}</h3>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-700">
                         Created {new Date(tree.created_at).toLocaleDateString()}
                       </p>
                     </div>
