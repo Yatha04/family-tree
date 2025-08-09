@@ -1,22 +1,32 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/supabase'
 
-// Debug: Log all environment variables to see what's being loaded
-console.log('Environment variables check:', {
-  NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'set' : 'missing',
-  NODE_ENV: process.env.NODE_ENV
-})
+// Optional diagnostics in development only
+if (process.env.NODE_ENV !== 'production') {
+  // eslint-disable-next-line no-console
+  console.log('Environment variables check:', {
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? 'set' : 'missing',
+    NODE_ENV: process.env.NODE_ENV
+  })
+}
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables:', {
-    url: supabaseUrl ? 'set' : 'missing',
-    key: supabaseAnonKey ? 'set' : 'missing'
-  })
-  throw new Error('Missing Supabase environment variables. Please check your .env.local file.')
+  const msg = 'Missing Supabase environment variables. Please check your .env.local file.'
+  if (process.env.NODE_ENV !== 'production') {
+    // eslint-disable-next-line no-console
+    console.error('Missing Supabase environment variables:', {
+      url: supabaseUrl ? 'set' : 'missing',
+      key: supabaseAnonKey ? 'set' : 'missing'
+    })
+    throw new Error(msg)
+  } else {
+    // In production, avoid throwing at import time to prevent hard crashes
+    // Consumers of the client will fail at call sites if misconfigured
+  }
 }
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
@@ -233,6 +243,33 @@ export const validateInvite = async (token: string) => {
 }
 
 export const acceptInvite = async (token: string, userId: string) => {
+  // Fetch invite first to get tree_id and role
+  const { data: invite, error: fetchError } = await supabase
+    .from('Invites')
+    .select('*')
+    .eq('token', token)
+    .single()
+
+  if (fetchError || !invite) {
+    return { data: null, error: fetchError || { message: 'Invite not found' } as any }
+  }
+
+  // Insert or upsert permission for user
+  const role = invite.role === 'viewer' ? 'viewer' : 'editor'
+  const { error: permError } = await supabase
+    .from('TreePermissions')
+    .upsert({
+      tree_id: invite.tree_id,
+      user_id: userId,
+      role
+    }, {
+      onConflict: 'tree_id,user_id'
+    } as any)
+
+  if (permError) {
+    return { data: null, error: permError }
+  }
+
   const { data, error } = await supabase
     .from('Invites')
     .update({ accepted: true })

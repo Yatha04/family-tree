@@ -45,6 +45,16 @@ CREATE TABLE IF NOT EXISTS "Invites" (
   "created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
+-- Create TreePermissions table (membership and roles)
+CREATE TABLE IF NOT EXISTS "TreePermissions" (
+  "id" uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
+  "tree_id" uuid NOT NULL REFERENCES "Trees"("id") ON DELETE CASCADE,
+  "user_id" uuid NOT NULL,
+  "role" text NOT NULL CHECK ("role" IN ('admin', 'editor', 'viewer')),
+  "created_at" timestamp with time zone DEFAULT now() NOT NULL,
+  UNIQUE("tree_id", "user_id")
+);
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS "idx_trees_admin_user" ON "Trees"("admin_user");
 CREATE INDEX IF NOT EXISTS "idx_members_tree_id" ON "Members"("tree_id");
@@ -53,12 +63,15 @@ CREATE INDEX IF NOT EXISTS "idx_relationships_a_id" ON "Relationships"("a_id");
 CREATE INDEX IF NOT EXISTS "idx_relationships_b_id" ON "Relationships"("b_id");
 CREATE INDEX IF NOT EXISTS "idx_invites_token" ON "Invites"("token");
 CREATE INDEX IF NOT EXISTS "idx_invites_tree_id" ON "Invites"("tree_id");
+CREATE INDEX IF NOT EXISTS "idx_tree_permissions_tree_id" ON "TreePermissions"("tree_id");
+CREATE INDEX IF NOT EXISTS "idx_tree_permissions_user_id" ON "TreePermissions"("user_id");
 
 -- Set up Row Level Security (RLS)
 ALTER TABLE "Trees" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Members" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Relationships" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Invites" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE "TreePermissions" ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for Trees
 CREATE POLICY "Users can view their own trees" ON "Trees"
@@ -91,6 +104,29 @@ CREATE POLICY "Users can insert members in their trees" ON "Members"
       AND "Trees"."admin_user" = auth.uid()
     )
   );
+
+-- RLS Policies for TreePermissions (basic; consider hardening with invite validation)
+CREATE POLICY "Users can view their own permissions" ON "TreePermissions"
+  FOR SELECT USING (auth.uid() = "user_id");
+
+CREATE POLICY "Admins can manage permissions for their tree" ON "TreePermissions"
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM "Trees"
+      WHERE "Trees"."id" = "TreePermissions"."tree_id"
+      AND "Trees"."admin_user" = auth.uid()
+    )
+  ) WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM "Trees"
+      WHERE "Trees"."id" = "TreePermissions"."tree_id"
+      AND "Trees"."admin_user" = auth.uid()
+    )
+  );
+
+-- Allow invited users to self-insert a permission (minimal demo policy; refine for production)
+CREATE POLICY "Users can insert their own permission" ON "TreePermissions"
+  FOR INSERT WITH CHECK (auth.uid() = "user_id");
 
 CREATE POLICY "Users can update members in their trees" ON "Members"
   FOR UPDATE USING (

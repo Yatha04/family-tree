@@ -1,6 +1,8 @@
+// This legacy component is kept for reference. React Flow-based `FamilyTreeBuilder` is the primary implementation.
+// Consider removing this file if no longer used.
 'use client'
 
-import { useMemo, useRef, useEffect, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
 interface Member {
   id: string
@@ -282,15 +284,15 @@ export default function TreeVisualization({ members, relationships }: TreeVisual
               />
               
                              {/* Photo or avatar */}
-               {node.member.photo_path ? (
+                 {node.member.photo_path ? (
                  <>
                    <defs>
                      <clipPath id={`clip-${node.id}`}>
                        <circle cx={node.x} cy={node.y} r="40" />
                      </clipPath>
                    </defs>
-                   <image  
-                     href={node.member.photo_path}
+                    <image  
+                      href={node.member.photo_path}
                      x={node.x - 40}
                      y={node.y - 40}
                      width="80"

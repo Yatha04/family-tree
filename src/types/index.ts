@@ -21,7 +21,7 @@ export interface Relationship {
   tree_id: string
   a_id: string
   b_id: string
-  type: 'parent' | 'spouse'
+  type: 'parent' | 'spouse' | 'sibling'
   created_at: string
 }
 

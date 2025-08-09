@@ -194,3 +194,39 @@ npm run dev
 - **Edit Relationship Modal**: Reuse RelationshipForm component for editing existing relationships
 - **Delete Confirmation**: Safe deletion with confirmation dialog to prevent accidental deletions
 - **Enhanced Relationship Display**: Better relationship text display with proper type handling (parent, spouse, sibling)
+
+## Code Review — Recommendations (Non-breaking, high impact)
+
+- Types consolidation
+  - Replace ad-hoc `Member`/`Relationship` interfaces declared inside components with shared types from `src/types/supabase.ts` or `src/types/index.ts`.
+  - Update `src/types/index.ts` `Relationship.type` union to include `'sibling'` to match DB and UI.
+  - Files to touch: `src/app/dashboard/tree/[id]/page.tsx`, `src/components/FamilyTreeBuilder.tsx`, `src/components/TreeVisualization.tsx`, `src/components/RelationshipForm.tsx`.
+
+- Persist actions from FamilyTreeBuilder
+  - Wire `onAddMember` and `onAddRelationship` in `src/app/dashboard/tree/[id]/page.tsx` to call `createMember` / `createRelationship` and then `loadTree()`.
+  - Infer relationship type from handle ids in `FamilyTreeBuilder` `onConnect` instead of always defaulting to `parent`.
+
+- Photo upload pathing
+  - Store storage `path` (not public URL) in DB; resolve to public URL at render using `getPhotoUrl` to decouple storage location.
+  - Optionally upload to a temporary key, then re-upload once a real `member.id` exists.
+
+- Supabase client hygiene
+  - Remove environment variable console logging and top-level throw in `src/lib/supabase.ts` for production builds; guard diagnostics behind `process.env.NODE_ENV !== 'production'`.
+
+- Invite permissions (functional gap)
+  - Add a `TreePermissions` (or `TreeMembers`) table mapping `tree_id`, `user_id`, `role`; extend RLS to allow `editor/viewer` access.
+  - On accept, insert permission row, then mark invite accepted.
+
+- Cleanup and consistency
+  - Remove or archive legacy `src/components/TreeVisualization.tsx` if unused (React Flow is primary).
+  - Replace `<img>` with Next `Image` for member photos for perf.
+  - Remove debug `console.log`/`alert` from dashboard flows before production.
+  - Either adopt `zustand` stores (`src/stores/*`) in pages or remove them to avoid dead code.
+
+### Completed in this pass
+- Unified types across components using Supabase row types; added `'sibling'` to shared `Relationship` type.
+- Persisted builder actions and inferred relationship type from handles; persisted via Supabase and reloaded tree.
+- Switched photo storage to save storage `path` and resolve to public URL at render with `getPhotoUrl`.
+- Cleaned up Supabase client environment logging; guarded diagnostics in dev only.
+- Implemented invite permissions: added `TreePermissions` table/schema, RLS, and updated `acceptInvite` to upsert permission then mark invite accepted.
+- Marked legacy `TreeVisualization.tsx` as deprecated reference (React Flow builder is primary).

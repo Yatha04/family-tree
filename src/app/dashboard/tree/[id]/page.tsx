@@ -2,50 +2,37 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { getTreeWithMembers, getCurrentUser, deleteRelationship, updateRelationship } from '@/lib/supabase'
+import { getTreeWithMembers, deleteRelationship, createMember, createRelationship, getPhotoUrl } from '@/lib/supabase'
 import Link from 'next/link'
 import FamilyTreeBuilder from '@/components/FamilyTreeBuilder'
 import MemberForm from '@/components/MemberForm'
 import RelationshipForm from '@/components/RelationshipForm'
-import PhotoUpload from '@/components/PhotoUpload'
 import InviteForm from '@/components/InviteForm'
+import type { Database } from '@/types/supabase'
 
-interface Member {
-  id: string
-  name: string
-  birthdate: string | null
-  photo_path: string | null
-  summary: string | null
-  created_at: string
-}
+type MemberRow = Database['public']['Tables']['Members']['Row']
+type RelationshipRow = Database['public']['Tables']['Relationships']['Row']
 
-interface Relationship {
-  id: string
-  a_id: string
-  b_id: string
-  type: string
-}
-
-interface Tree {
+interface TreeWithRelations {
   id: string
   name: string
   admin_user: string
   created_at: string
-  Members: Member[]
-  Relationships: Relationship[]
+  Members: MemberRow[]
+  Relationships: RelationshipRow[]
 }
 
 export default function TreeViewPage() {
   const params = useParams()
   const treeId = params.id as string
   
-  const [tree, setTree] = useState<Tree | null>(null)
+  const [tree, setTree] = useState<TreeWithRelations | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'view' | 'members' | 'relationships' | 'invite'>('view')
   const [showMemberForm, setShowMemberForm] = useState(false)
   const [showRelationshipForm, setShowRelationshipForm] = useState(false)
-  const [editingRelationship, setEditingRelationship] = useState<Relationship | null>(null)
+  const [editingRelationship, setEditingRelationship] = useState<RelationshipRow | null>(null)
   const [deletingRelationshipId, setDeletingRelationshipId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -59,7 +46,8 @@ export default function TreeViewPage() {
         setError('Failed to load tree')
         return
       }
-      setTree(data)
+      // Cast returned shape to expected interface (Supabase select uses aliased relations)
+      setTree(data as unknown as TreeWithRelations)
     } catch (err) {
       setError('Failed to load tree')
     } finally {
@@ -190,13 +178,29 @@ export default function TreeViewPage() {
               <FamilyTreeBuilder 
                 members={tree.Members} 
                 relationships={tree.Relationships}
-                onAddMember={(member) => {
-                  // TODO: Implement member addition
-                  console.log('Add member:', member)
+                onAddMember={async (member) => {
+                  // Persist a newly added member (from builder). Since builder does not have a real id yet,
+                  // only persist the member and let the tree reload reflect latest state.
+                  const memberData = {
+                    tree_id: treeId,
+                    name: member.name ?? 'New Member',
+                    birthdate: member.birthdate ?? undefined,
+                    summary: member.summary ?? undefined,
+                    photo_path: member.photo_path ?? null,
+                  }
+                  await createMember(memberData)
+                  await loadTree()
                 }}
-                onAddRelationship={(relationship) => {
-                  // TODO: Implement relationship addition
-                  console.log('Add relationship:', relationship)
+                onAddRelationship={async (relationship) => {
+                  // Only persist connections between existing nodes (ids must be real member ids)
+                  if (!relationship.a_id || !relationship.b_id || !relationship.type) return
+                  await createRelationship({
+                    tree_id: treeId,
+                    a_id: relationship.a_id,
+                    b_id: relationship.b_id,
+                    type: relationship.type as 'parent' | 'spouse' | 'sibling',
+                  })
+                  await loadTree()
                 }}
               />
             )}
@@ -226,7 +230,7 @@ export default function TreeViewPage() {
                     <div className="flex items-center space-x-3">
                       {member.photo_path ? (
                         <img
-                          src={member.photo_path}
+                          src={getPhotoUrl(member.photo_path)}
                           alt={member.name}
                           className="w-12 h-12 rounded-full object-cover"
                         />

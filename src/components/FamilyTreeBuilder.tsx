@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useState, useRef, useEffect, useMemo } from 'react'
+import React, { useCallback, useState, useRef, useEffect } from 'react'
 import ReactFlow, {
   ReactFlowProvider,
   addEdge,
@@ -18,37 +18,25 @@ import ReactFlow, {
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { v4 as uuid } from 'uuid'
-
-interface Member {
-  id: string
-  name: string
-  birthdate: string | null
-  photo_path: string | null
-  summary: string | null
-  created_at: string
-}
-
-interface Relationship {
-  id: string
-  a_id: string
-  b_id: string
-  type: string
-}
+import type { Database } from '@/types/supabase'
+import { getPhotoUrl } from '@/lib/supabase'
+type MemberRow = Database['public']['Tables']['Members']['Row']
+type RelationshipRow = Database['public']['Tables']['Relationships']['Row']
 
 interface FamilyTreeBuilderProps {
-  members: Member[]
-  relationships: Relationship[]
-  onAddMember?: (member: Partial<Member>) => void
-  onAddRelationship?: (relationship: Partial<Relationship>) => void
+  members: MemberRow[]
+  relationships: RelationshipRow[]
+  onAddMember?: (member: Partial<MemberRow>) => void
+  onAddRelationship?: (relationship: Partial<RelationshipRow>) => void
 }
 
 // Define the node data type for React Flow
-type NodeData = Member & { isPlaceholder?: boolean }
+type NodeData = MemberRow & { isPlaceholder?: boolean }
 
 type RelType = 'parent' | 'spouse' | 'child' | 'sibling'
 
 // Hierarchical layout function
-const applyHierarchicalLayout = (nodes: any[], relationships: Relationship[]) => {
+const applyHierarchicalLayout = (nodes: any[], relationships: RelationshipRow[]) => {
   const nodeMap = new Map(nodes.map(node => [node.id, { ...node }]))
   const parentChildMap = new Map<string, string[]>()
   const spouseMap = new Map<string, string[]>()
@@ -166,7 +154,7 @@ const FamilyNode = ({ data }: { data: any }) => {
       <div className="flex justify-center mb-2">
         {data.photo_path ? (
           <img
-            src={data.photo_path}
+            src={getPhotoUrl(data.photo_path)}
             alt={data.name}
             className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
           />
@@ -289,11 +277,20 @@ export default function FamilyTreeBuilder({
 
   // Handle connecting existing nodes
   const onConnect = useCallback((params: Connection) => {
+    const inferType = (sourceHandle?: string | null, targetHandle?: string | null): 'parent' | 'spouse' | 'sibling' => {
+      const handles = `${sourceHandle || ''}-${targetHandle || ''}`
+      if (handles.includes('spouse')) return 'spouse'
+      if (handles.includes('sibling')) return 'sibling'
+      return 'parent'
+    }
+
+    const relType = inferType((params as any).sourceHandle, (params as any).targetHandle)
+
     if (onAddRelationship) {
       onAddRelationship({
         a_id: params.source!,
         b_id: params.target!,
-        type: 'parent' // Default type, could be enhanced with a selector
+        type: relType
       })
     }
     const newEdge = {
@@ -302,12 +299,13 @@ export default function FamilyTreeBuilder({
       type: 'default',
       animated: false,
       style: {
-        stroke: '#3B82F6',
-        strokeWidth: 5,
+        stroke: relType === 'spouse' ? '#8B5CF6' : relType === 'sibling' ? '#F97316' : '#3B82F6',
+        strokeDasharray: relType === 'spouse' ? '5,5' : undefined,
+        strokeWidth: relType === 'spouse' ? 6 : 5,
         opacity: 1,
         zIndex: 1000,
       },
-      data: { type: 'parent' }
+      data: { type: relType }
     }
     setEdges(eds => addEdge(newEdge, eds))
   }, [onAddRelationship])
@@ -326,7 +324,7 @@ export default function FamilyTreeBuilder({
     }[type]
 
     const newNodeId = uuid()
-    const newMember: Partial<Member> = {
+    const newMember: Partial<MemberRow> = {
       name: `New ${type}`,
       birthdate: null,
       photo_path: null,
@@ -381,10 +379,11 @@ export default function FamilyTreeBuilder({
       onAddMember(newMember)
     }
     if (onAddRelationship) {
+      const persistType: 'parent' | 'spouse' | 'sibling' = type === 'child' ? 'parent' : type
       onAddRelationship({
         a_id: parentId,
         b_id: newNodeId,
-        type
+        type: persistType
       })
     }
   }

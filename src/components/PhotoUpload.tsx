@@ -43,8 +43,8 @@ export default function PhotoUpload({ onPhotoUploaded, currentPhotoPath }: Photo
       }
 
       if (data) {
-        const photoUrl = getPhotoUrl(data.path)
-        onPhotoUploaded(photoUrl)
+        // Store storage path; resolve to public URL at render time
+        onPhotoUploaded(data.path)
       }
     } catch (err) {
       setError('Failed to upload photo')
@@ -95,7 +95,7 @@ export default function PhotoUpload({ onPhotoUploaded, currentPhotoPath }: Photo
       {currentPhotoPath && (
         <div className="flex items-center space-x-3">
           <img
-            src={currentPhotoPath}
+            src={getPhotoUrl(currentPhotoPath)}
             alt="Member photo"
             className="w-16 h-16 rounded-full object-cover border"
           />

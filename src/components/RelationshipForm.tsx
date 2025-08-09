@@ -2,27 +2,15 @@
 
 import { useState, useEffect } from 'react'
 import { createRelationship, updateRelationship } from '@/lib/supabase'
+import type { Database } from '@/types/supabase'
 
-interface Member {
-  id: string
-  name: string
-  birthdate: string | null
-  photo_path: string | null
-  summary: string | null
-  created_at: string
-}
-
-interface Relationship {
-  id: string
-  a_id: string
-  b_id: string
-  type: string
-}
+type MemberRow = Database['public']['Tables']['Members']['Row']
+type RelationshipRow = Database['public']['Tables']['Relationships']['Row']
 
 interface RelationshipFormProps {
   treeId: string
-  members: Member[]
-  editingRelationship?: Relationship | null
+  members: MemberRow[]
+  editingRelationship?: RelationshipRow | null
   onSuccess: () => void
   onCancel: () => void
 }
