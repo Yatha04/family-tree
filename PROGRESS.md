@@ -46,6 +46,12 @@
 - [x] Tree visualization component - Interactive family tree diagram/chart to visualize relationships (`src/components/TreeVisualization.tsx`)
 - [x] Photo upload functionality - Ability to upload and manage photos for family members (`src/components/PhotoUpload.tsx`)
 
+### Enhancements
+- [x] Edit/delete members from Members tab
+  - Edit: `src/components/MemberForm.tsx` now accepts `editingMember` and updates via `updateMember`
+  - Delete: `src/app/dashboard/tree/[id]/page.tsx` adds Delete actions with confirmation, calls `deleteMember`
+  - API: `src/lib/supabase.ts` `updateMember` now supports `location`
+
 ### Collaboration
 - [x] Invite system implementation - Allow users to invite others to view or edit their family trees (`src/components/InviteForm.tsx`)
 
@@ -183,6 +189,26 @@ npm run dev
 - **Professional Controls**: React Flow's built-in navigation, controls, and background features
 - **Flexible Layout**: No hierarchical constraints - grow family tree organically in any direction
 - **Relationship Management**: Full CRUD operations for relationships with edit and delete functionality
+
+## UI Enhancement: Gender-based Card Tint (Very Subtle)
+
+- Added a slight background/border tint to member cards in the React Flow tree based on `gender`:
+  - Male: light blue (`bg-blue-50`/`border-blue-100`)
+  - Female: light pink (`bg-pink-50`/`border-pink-100`)
+  - Other/unspecified: default white (`bg-white`/`border-gray-200`)
+- Implementation: `src/components/FamilyTreeBuilder.tsx` custom node now derives tint from `data.gender`.
+- Impact: Minimal visual cue without overpowering the UI.
+
+## New Feature: Member Gender Attribute
+
+- Added optional `gender` for family members.
+- Changes:
+  - Updated form UI in `src/components/MemberForm.tsx` to include a Gender select and send it with create/update.
+  - Extended Supabase helpers in `src/lib/supabase.ts` to accept `gender` on `createMember` and `updateMember`.
+  - Updated shared types in `src/types/index.ts` to include `gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say'` on `Member`.
+  - Database schema: added `gender` column with CHECK constraint to `Members` in `supabase-schema.sql`.
+
+Impact: Users can record a member's gender. Backward-compatible; existing data unaffected.
 
 ## New Feature: Member Location Attribute
 

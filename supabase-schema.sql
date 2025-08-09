@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS "Members" (
   "photo_path" text,
   "summary" text,
   "location" text,
+  "gender" text CHECK ("gender" IN ('male','female','other','prefer_not_to_say')),
   "created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
@@ -28,6 +29,7 @@ CREATE TABLE IF NOT EXISTS "Members" (
 ALTER TABLE "Members" ADD COLUMN IF NOT EXISTS "position_x" integer;
 ALTER TABLE "Members" ADD COLUMN IF NOT EXISTS "position_y" integer;
 ALTER TABLE "Members" ADD COLUMN IF NOT EXISTS "location" text;
+ALTER TABLE "Members" ADD COLUMN IF NOT EXISTS "gender" text CHECK ("gender" IN ('male','female','other','prefer_not_to_say'));
 
 -- Create Relationships table
 CREATE TABLE IF NOT EXISTS "Relationships" (

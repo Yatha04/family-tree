@@ -114,6 +114,7 @@ export const createMember = async (memberData: {
   birthdate?: string
   summary?: string
   location?: string
+  gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say'
   photo_path?: string | null
 }) => {
   const { data, error } = await supabase
@@ -129,6 +130,8 @@ export const updateMember = async (memberId: string, updates: {
   name?: string
   birthdate?: string
   summary?: string
+  location?: string
+  gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say'
   photo_path?: string | null
   position_x?: number | null
   position_y?: number | null

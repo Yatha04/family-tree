@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
-import { getTreeWithMembers, deleteRelationship, createMember, createRelationship, getPhotoUrl } from '@/lib/supabase'
+import { getTreeWithMembers, deleteRelationship, createMember, createRelationship, getPhotoUrl, deleteMember } from '@/lib/supabase'
 import Link from 'next/link'
 import FamilyTreeBuilder from '@/components/FamilyTreeBuilder'
 import MemberForm from '@/components/MemberForm'
@@ -33,6 +33,8 @@ export default function TreeViewPage() {
   const [showMemberForm, setShowMemberForm] = useState(false)
   const [showRelationshipForm, setShowRelationshipForm] = useState(false)
   const [editingRelationship, setEditingRelationship] = useState<RelationshipRow | null>(null)
+  const [editingMember, setEditingMember] = useState<MemberRow | null>(null)
+  const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null)
   const [deletingRelationshipId, setDeletingRelationshipId] = useState<string | null>(null)
 
   useEffect(() => {
@@ -68,6 +70,25 @@ export default function TreeViewPage() {
   const handleRelationshipEdited = () => {
     loadTree()
     setEditingRelationship(null)
+  }
+  const handleMemberEdited = () => {
+    loadTree()
+    setEditingMember(null)
+  }
+
+  const handleDeleteMember = async (memberId: string) => {
+    try {
+      const { error } = await deleteMember(memberId)
+      if (error) {
+        setError('Failed to delete member')
+        return
+      }
+      loadTree()
+    } catch (err) {
+      setError('Failed to delete member')
+    } finally {
+      setDeletingMemberId(null)
+    }
   }
 
   const handleDeleteRelationship = async (relationshipId: string) => {
@@ -253,6 +274,20 @@ export default function TreeViewPage() {
                     {member.summary && (
                       <p className="text-sm text-gray-600 mt-2">{member.summary}</p>
                     )}
+                    <div className="flex items-center justify-end space-x-2 mt-3">
+                      <button
+                        onClick={() => setEditingMember(member)}
+                        className="px-3 py-1 text-sm text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 rounded"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => setDeletingMemberId(member.id)}
+                        className="px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -349,6 +384,20 @@ export default function TreeViewPage() {
         </div>
       )}
 
+      {/* Edit Member Modal */}
+      {editingMember && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <MemberForm
+              treeId={treeId}
+              editingMember={editingMember}
+              onSuccess={handleMemberEdited}
+              onCancel={() => setEditingMember(null)}
+            />
+          </div>
+        </div>
+      )}
+
       {showRelationshipForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
@@ -395,6 +444,34 @@ export default function TreeViewPage() {
                 </button>
                 <button
                   onClick={() => handleDeleteRelationship(deletingRelationshipId)}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Member Confirmation Modal */}
+      {deletingMemberId && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Delete Member</h3>
+              <p className="text-gray-600 mb-6">
+                Deleting a member will also remove any relationships connected to them. This action cannot be undone.
+              </p>
+              <div className="flex justify-center space-x-3">
+                <button
+                  onClick={() => setDeletingMemberId(null)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteMember(deletingMemberId)}
                   className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
                 >
                   Delete

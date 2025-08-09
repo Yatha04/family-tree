@@ -38,6 +38,7 @@ export interface Database {
           photo_path: string | null
           summary: string | null
           location: string | null
+           gender: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null
            position_x: number | null
            position_y: number | null
           created_at: string
@@ -50,6 +51,7 @@ export interface Database {
           photo_path?: string | null
           summary?: string | null
           location?: string | null
+           gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null
            position_x?: number | null
            position_y?: number | null
           created_at?: string
@@ -62,6 +64,7 @@ export interface Database {
           photo_path?: string | null
           summary?: string | null
           location?: string | null
+           gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null
            position_x?: number | null
            position_y?: number | null
           created_at?: string

@@ -104,8 +104,14 @@ const applyHierarchicalLayout = (nodes: any[], relationships: RelationshipRow[])
 
 // Custom node component for family members
 const FamilyNode = ({ data }: { data: any }) => {
+  const gender: 'male' | 'female' | 'other' | 'prefer_not_to_say' | null | undefined = data?.gender ?? null
+  const tintClasses = gender === 'male'
+    ? 'bg-blue-50 border-blue-100'
+    : gender === 'female'
+    ? 'bg-pink-50 border-pink-100'
+    : 'bg-white border-gray-200'
   return (
-    <div className="bg-white border-2 border-gray-200 rounded-lg p-3 shadow-md min-w-[120px] relative">
+    <div className={`border-2 rounded-lg p-3 shadow-md min-w-[120px] relative ${tintClasses}`}>
       {/* Connection handles - specific to relationship types */}
       <Handle 
         type="target" 

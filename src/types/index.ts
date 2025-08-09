@@ -14,6 +14,7 @@ export interface Member {
   photo_path?: string
   summary?: string
   location?: string
+  gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say'
   created_at: string
 }
 
