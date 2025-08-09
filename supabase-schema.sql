@@ -23,6 +23,10 @@ CREATE TABLE IF NOT EXISTS "Members" (
   "created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
+-- Optional stored positions for React Flow layout
+ALTER TABLE "Members" ADD COLUMN IF NOT EXISTS "position_x" integer;
+ALTER TABLE "Members" ADD COLUMN IF NOT EXISTS "position_y" integer;
+
 -- Create Relationships table
 CREATE TABLE IF NOT EXISTS "Relationships" (
   "id" uuid DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -74,6 +78,12 @@ ALTER TABLE "Invites" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "TreePermissions" ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for Trees
+-- Reset existing policies to avoid recursion from legacy definitions
+DROP POLICY IF EXISTS "Users can view their own trees" ON "Trees";
+DROP POLICY IF EXISTS "Users can insert their own trees" ON "Trees";
+DROP POLICY IF EXISTS "Users can update their own trees" ON "Trees";
+DROP POLICY IF EXISTS "Users can delete their own trees" ON "Trees";
+
 CREATE POLICY "Users can view their own trees" ON "Trees"
   FOR SELECT USING (auth.uid() = "admin_user");
 

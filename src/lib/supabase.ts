@@ -11,8 +11,8 @@ if (process.env.NODE_ENV !== 'production') {
   })
 }
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string
 
 if (!supabaseUrl || !supabaseAnonKey) {
   const msg = 'Missing Supabase environment variables. Please check your .env.local file.'
@@ -129,6 +129,8 @@ export const updateMember = async (memberId: string, updates: {
   birthdate?: string
   summary?: string
   photo_path?: string | null
+  position_x?: number | null
+  position_y?: number | null
 }) => {
   const { data, error } = await supabase
     .from('Members')

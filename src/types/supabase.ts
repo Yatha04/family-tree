@@ -37,6 +37,8 @@ export interface Database {
           birthdate: string | null
           photo_path: string | null
           summary: string | null
+           position_x: number | null
+           position_y: number | null
           created_at: string
         }
         Insert: {
@@ -46,6 +48,8 @@ export interface Database {
           birthdate?: string | null
           photo_path?: string | null
           summary?: string | null
+           position_x?: number | null
+           position_y?: number | null
           created_at?: string
         }
         Update: {
@@ -55,6 +59,8 @@ export interface Database {
           birthdate?: string | null
           photo_path?: string | null
           summary?: string | null
+           position_x?: number | null
+           position_y?: number | null
           created_at?: string
         }
       }

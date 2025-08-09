@@ -184,6 +184,35 @@ npm run dev
 - **Flexible Layout**: No hierarchical constraints - grow family tree organically in any direction
 - **Relationship Management**: Full CRUD operations for relationships with edit and delete functionality
 
+## New Feature: Persisted Manual Layout (React Flow)
+
+- Added optional `position_x` and `position_y` columns to `Members` so manual node positions can be saved.
+- Extended Supabase TypeScript types to include `position_x`/`position_y` on `Members` Row/Insert/Update.
+- Updated `FamilyTreeBuilder` to:
+  - Initialize node positions from saved `position_x`/`position_y` when present.
+  - Fall back to hierarchical layout only if positions are not saved.
+  - Persist positions on drag stop via `updateMember`.
+- Updated Supabase client `updateMember` to accept `position_x`/`position_y`.
+- Outcome: Users can drag cards to align them and the layout is preserved across reloads.
+
+## Fixes
+
+- Resolved Supabase error when creating a tree: `infinite recursion detected in policy for relation "Trees"`.
+  - Added defensive `DROP POLICY IF EXISTS` statements before recreating `Trees` RLS policies in `supabase-schema.sql` to avoid legacy/duplicate policy recursion.
+  - Action required: Re-run the updated `supabase-schema.sql` in the Supabase SQL editor to apply policy resets and avoid recursion during inserts.
+
+### Verification
+
+Run this to inspect current `Trees` policies (corrected column name):
+
+```sql
+SELECT policyname, cmd, qual, with_check
+FROM pg_policies
+WHERE schemaname = 'public' AND tablename = 'Trees';
+```
+
+You should see the admin-only CRUD policies, and optionally a read policy that allows users listed in `TreePermissions` to view trees.
+
 ## New Features Implemented
 - **FamilyTreeBuilder Component**: New React Flow-based interactive family tree builder
 - **Context Menu System**: Click nodes to add relatives with intuitive menu interface

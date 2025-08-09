@@ -19,7 +19,7 @@ import ReactFlow, {
 import 'reactflow/dist/style.css'
 import { v4 as uuid } from 'uuid'
 import type { Database } from '@/types/supabase'
-import { getPhotoUrl } from '@/lib/supabase'
+import { getPhotoUrl, updateMember } from '@/lib/supabase'
 type MemberRow = Database['public']['Tables']['Members']['Row']
 type RelationshipRow = Database['public']['Tables']['Relationships']['Row']
 
@@ -222,9 +222,9 @@ export default function FamilyTreeBuilder({
     const memberNodes: any[] = members.map((member, index) => ({
       id: member.id,
       type: 'familyNode',
-      position: { 
-        x: index * 200 - (members.length - 1) * 100, 
-        y: 0 
+      position: {
+        x: member.position_x ?? (index * 200 - (members.length - 1) * 100),
+        y: member.position_y ?? 0,
       },
       data: member,
     }))
@@ -265,7 +265,9 @@ export default function FamilyTreeBuilder({
     // Apply hierarchical layout for parent-child relationships
     if (relationships.length > 0) {
       // Apply hierarchical positioning
-      const positionedNodes = applyHierarchicalLayout([...memberNodes], relationships)
+      // If nodes already have saved positions, keep them; otherwise layout.
+      const hasAnySaved = members.some(m => m.position_x != null && m.position_y != null)
+      const positionedNodes = hasAnySaved ? memberNodes : applyHierarchicalLayout([...memberNodes], relationships)
       setNodes(positionedNodes)
     } else {
       setNodes(memberNodes)
@@ -432,6 +434,19 @@ export default function FamilyTreeBuilder({
             type: 'default',
             animated: false,
             style: { stroke: '#3B82F6', strokeWidth: 5, opacity: 1, zIndex: 1000 }
+          }}
+          onNodeDragStop={async (_e, node) => {
+            // Persist position for real members only (skip placeholders)
+            const member = members.find(m => m.id === node.id)
+            if (!member) return
+            try {
+              await updateMember(node.id, {
+                position_x: Math.round(node.position.x),
+                position_y: Math.round(node.position.y),
+              })
+            } catch {
+              // ignore
+            }
           }}
         >
           <MiniMap />
